@@ -323,6 +323,7 @@ def test_dataframe_level_checks():
         ),
         ({"int_col": pl.lit(-1)}, pl.col("int_col").ge(0)),
         ({"int_col": pl.lit("d")}, pl.col("string_col").ne("d")),
+        ({"int_col": pl.Series([None, -1, 1])}, pl.col("int_col").ge(0) | pl.col("int_col").is_null())
     ],
 )
 @pytest.mark.parametrize("lazy", [False, True])
@@ -334,13 +335,16 @@ def test_drop_invalid_rows(
     ldf_schema_with_check,
 ):
     ldf_schema_with_check.drop_invalid_rows = True
-    modified_data = ldf_basic.with_columns(column_mod)
+    modified_data = ldf_basic.with_columns(**column_mod)
     if lazy:
+        print(modified_data.collect())
         validated_data = modified_data.pipe(
             ldf_schema_with_check.validate,
             lazy=lazy,
         )
+        print(validated_data.collect())
         expected_valid_data = modified_data.filter(filter_expr)
+        print(expected_valid_data.collect())
         assert validated_data.collect().equals(expected_valid_data.collect())
     else:
         with pytest.raises(pa.errors.SchemaDefinitionError):
