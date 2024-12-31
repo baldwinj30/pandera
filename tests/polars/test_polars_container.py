@@ -313,17 +313,17 @@ def test_dataframe_level_checks():
     "column_mod,filter_expr",
     [
         ({"int_col": pl.Series([-1, 1, 1])}, pl.col("int_col").ge(0)),
-        ({"string_col": pl.Series([*"013"])}, pl.col("string_col").ne("d")),
+        ({"string_col": pl.Series([*"013"])}, pl.col("string_col").ne("3")),
         (
             {
                 "int_col": pl.Series([-1, 1, 1]),
                 "string_col": pl.Series([*"013"]),
             },
-            pl.col("int_col").ge(0) & pl.col("string_col").ne("d"),
+            pl.col("int_col").ge(0) & pl.col("string_col").ne("3"),
         ),
         ({"int_col": pl.lit(-1)}, pl.col("int_col").ge(0)),
-        ({"int_col": pl.lit("d")}, pl.col("string_col").ne("d")),
-        ({"int_col": pl.Series([None, -1, 1])}, pl.col("int_col").ge(0) | pl.col("int_col").is_null())
+        ({"string_col": pl.lit("d")}, pl.col("string_col").ne("d")),
+        ({"int_col": pl.Series([None, -1, 1])}, pl.col("int_col").ge(0))# | pl.col("int_col").is_null())
     ],
 )
 @pytest.mark.parametrize("lazy", [False, True])
@@ -335,6 +335,8 @@ def test_drop_invalid_rows(
     ldf_schema_with_check,
 ):
     ldf_schema_with_check.drop_invalid_rows = True
+    ldf_schema_with_check = ldf_schema_with_check.update_column("int_col", nullable=True)
+    print(ldf_schema_with_check)
     modified_data = ldf_basic.with_columns(**column_mod)
     if lazy:
         print(modified_data.collect())
@@ -352,6 +354,9 @@ def test_drop_invalid_rows(
                 ldf_schema_with_check.validate,
                 lazy=lazy,
             )
+
+
+# def test_drop_invalid_rows_nullable
 
 
 def test_set_defaults(ldf_basic, ldf_schema_basic):
